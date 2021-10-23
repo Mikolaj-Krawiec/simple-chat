@@ -1,0 +1,13 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "invites",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath":  "accepted", "order": "ASCENDING" },
+        { "fieldPath":  "team", "order": "ASCENDING" },
+        { "fieldPath":  "timestamp", "order": "ASCENDING" }
+      ]
+    }
+  ]
+}
