@@ -46,15 +46,21 @@ export const actions = {
   async getUserInfo (ctx, userId) {
     const ref = this.$fire.firestore.collection('users').doc(userId)
     const unsubscribeUser = ref.onSnapshot(async (snapshot) => {
-      const user = snapshot.data()
-      user.id = userId
-      if (user.avatar) {
-        const avatar = await this.$storage.getUserAvatar(user.avatar)
-        user.avatar = avatar
-      } else if (user.googleAvatar) {
-        user.avatar = user.googleAvatar
+      if(snapshot.exists) {
+        try {
+          const user = snapshot.data()
+          user.id = userId
+          if (user.avatar) {
+            const avatar = await this.$storage.getUserAvatar(user.avatar)
+            user.avatar = avatar
+          } else if (user.googleAvatar) {
+            user.avatar = user.googleAvatar
+          }
+          ctx.commit('SET_USER', { user })
+        } catch (e) {
+          console.log(e)
+        }
       }
-      ctx.commit('SET_USER', { user })
     }, (err) => {
       console.log(`Encountered error: ${err}`)
     })
