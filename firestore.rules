@@ -8,5 +8,13 @@ service cloud.firestore {
       allow write: if (request.auth.uid == userId);
       allow read: if request.auth != null;
     }
+    match /chats/{chatId} {
+      allow write: if chatId == 'global';
+      allow read: if chatId == 'global';
+
+      match /messages/{messageId} {
+        allow read, write: if true;
+      }
+    }
   }
 }
