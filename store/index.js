@@ -50,10 +50,7 @@ export const actions = {
         try {
           const user = snapshot.data()
           user.id = userId
-          if (user.avatar) {
-            const avatar = await this.$storage.getUserAvatar(user.avatar)
-            user.avatar = avatar
-          } else if (user.googleAvatar) {
+          if (!user.avatar && user.googleAvatar) {
             user.avatar = user.googleAvatar
           }
           ctx.commit('SET_USER', { user })

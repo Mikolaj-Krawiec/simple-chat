@@ -2,16 +2,13 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     match /{allPaths=**} {
-      allow read, write: if request.auth != null;
+      allow read: if request.auth != null;
     }
-    match /images/teams/{teamId}/{imageId} {
-      allow write: if request.resource.size < 5 * 1024 * 1024
+    match /users/{userId}/{imageId} {
+      allow write: if request.auth.uid == userId
+                   && request.resource.size < 1 * 1024 * 1024
                    && request.resource.contentType.matches('image/.*')
-                   && request.auth != null;
-      allow read: if request.auth != null;
-    }
-    match /images/teams/default/{imageId} {
-      allow read: if request.auth != null;
+      allow read: if true;
     }
     match /images/logo/{imageId} {
       allow read: if true;

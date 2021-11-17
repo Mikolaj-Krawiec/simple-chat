@@ -23,7 +23,7 @@
         @click="browseImage"
       >
         <v-img
-          :src="cameraIcon"
+          :src="require('@/assets/img/camera-icon.svg')"
           alt="camera icon"
           height="12px"
           width="14px"
@@ -67,7 +67,6 @@
 </template>
 
 <script>
-import cameraIcon from '@/assets/img/camera-icon.svg'
 export default {
   name: 'UtilsAvatarInput',
   props: {
@@ -86,52 +85,42 @@ export default {
       type: String,
       default: ''
     },
-    uploading: {
-      type: Boolean,
-      default: false
+  },
+  data() {
+    return {
+      uploading: false,
     }
   },
-  data () {
-    return {
-      cameraIcon
+  computed: {
+    user () {
+      return this.$store.state.user
     }
   },
   methods: {
     browseImage () {
       this.$refs.file.click()
     },
-    handleFileUpload (event) {
-      const files = event.target.files
-      if (!files.length) { return }
-      this.createImage(files[0])
-    },
-    createImage (file) {
-      if (file.size > 5120000) {
-        const errorMessage = 'Max size of the avatar: 5MB'
-        this.$emit('handleError', errorMessage)
-      } else {
-        const reader = new FileReader()
-        reader.onload = (e) => {
-          const image = new Image()
-          image.src = e.target.result
-          image.onload = () => {
-            if (image.height > 1024 || image.width > 1024) {
-              const errorMessage = 'Max dimensions of the avatar: 1024px x 1024px'
-              this.$emit('handleError', errorMessage)
-            } else {
-              const avatar = {
-                file,
-                url: e.target.result,
-                type: file.type,
-                extension: file.type.split('/')[1]
-              }
-              this.$emit('updateAvatar', avatar)
-            }
-          }
-        }
-        reader.readAsDataURL(file)
+    async handleFileUpload (event) {
+      try {
+        this.uploading = true
+        const files = event.target.files
+        if (!files.length) { return }
+        const file = files[0]
+        console.log('file: ', file)
+        const storageRef = this.$fire.storage.ref()
+        const fileExtension = file.name.split('.').pop()
+        const filePath = `/users/${this.user.id}/avatar.${fileExtension}`
+        const fileRef = storageRef.child(filePath)
+        await fileRef.put(file)
+        const fileUrl = await fileRef.getDownloadURL()
+        const userRef = this.$fire.firestore.collection('users').doc(this.user.id)
+        await userRef.set({ avatar: fileUrl }, { merge: true })
+        this.uploading = false
+      } catch (e) {
+        this.uploading = false
+        console.log(e)
       }
-    }
+    },
   }
 }
 </script>

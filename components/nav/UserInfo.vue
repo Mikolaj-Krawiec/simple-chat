@@ -1,42 +1,38 @@
 <template>
-  <v-menu
-    v-model="menu"
-    offset-x
-    right
-    rounded="lg"
-    :close-on-content-click="false"
-  >
-    <template #activator="{ on, attrs }">
+  <div v-if="user">
+    <v-btn
+      absolute
+      top
+      right
+      icon
+      @click="expand=!expand"
+      class="mt-2"
+    >
+      <v-icon :class="{'mdi-rotate-180': expand}">mdi-chevron-down</v-icon>
+    </v-btn>
+    <v-expand-transition>
       <div
+        v-if="!expand"
         class="text-left"
-        v-bind="attrs"
-        v-on="on"
       >
-        <v-row v-if="user">
+        <v-row>
           <v-col cols="auto" class="pr-0">
             <UtilsUserAvatar :avatar="user.avatar" />
           </v-col>
           <v-col
             class="d-flex flex-column justify-center custom--text text--blue text-body-2"
           >
-            <span
-              v-if="user.name"
-              class="user-name"
-            >
-              {{ user.name }}
-            </span>
-            <span
-              v-if="!user.name && user.email"
-              data-cy="user-name"
-            >
-              {{ user.email }}
+            <span>
+              {{ user.name || user.email }}
             </span>
           </v-col>
         </v-row>
       </div>
-    </template>
-    <NavUserDetails @close="menu = false" />
-  </v-menu>
+    </v-expand-transition>
+    <v-expand-transition>
+      <NavUserDetails v-if="expand"/>
+    </v-expand-transition>
+  </div>
 </template>
 
 <script>
@@ -44,19 +40,28 @@ export default {
   name: 'NavUserInfo',
   data () {
     return {
-      menu: false
+      expand: false,
+      avatar: {
+        url: null,
+        extension: null,
+        file: null,
+        type: null
+      },
+      errorMessage: '',
+      uploading: false
     }
   },
   computed: {
     user () {
       return this.$store.state.user
+    },
+    initialAvatar () {
+      if (this.user) {
+        return this.user.avatar
+      } else {
+        return ''
+      }
     }
   }
 }
 </script>
-
-<style scoped>
-.user-name {
-  word-break: normal;
-}
-</style>

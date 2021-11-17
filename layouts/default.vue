@@ -10,7 +10,7 @@
             <v-card
               class="pa-5 rounded-xl"
               color="darkGreen"
-              min-width="300"
+              min-width="296"
             >
               <Nav/>
             </v-card>
@@ -38,9 +38,8 @@ export default {
 }
 </script>
 
-<style scoped>
-
+<style scoped lang="scss">
 .v-application {
-  background-color: #2F3E46;
+  background-color: var(--v-background-base);
 }
 </style>
