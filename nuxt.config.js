@@ -67,6 +67,9 @@ export default {
           ssl: isDev && useEmulators ? false : undefined
         }
       },
+      storage: {
+        emulatorPort: isDev && useEmulators ? 9199 : undefined // It doesn't work yet.
+      },
     }
   },
 
@@ -74,6 +77,9 @@ export default {
   vuetify: {
     customVariables: ['~/assets/variables.scss'],
     theme: {
+      options: {
+        customProperties: true
+      },
       dark: true,
       themes: {
         light: {
@@ -86,11 +92,13 @@ export default {
           success: colors.green.accent3
         },
         dark: {
+          background: '#2F3E46',
           darkGray: '#2F3E46',
           gray: '#354F52',
           darkGreen: '#52796F',
-          green: '#84A98C',
-          lightGreen: '#A7BEA9',
+          green: '#6B917E',
+          lightGreen: '#84A98C',
+          cream: '#A7BEA9',
           lightGray: '#CAD2C5',
 
           primary: '#354F52',

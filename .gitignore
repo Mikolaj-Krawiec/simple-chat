@@ -90,4 +90,4 @@ sw.*
 *.swp
 
 # settings file
-.settings.js
+settings.js
