@@ -6,9 +6,9 @@
     color="white"
     offset-x="20"
     offset-y="20"
-    class="mb-4 border-radius"
+    class="mb-4 border-radius d-flex justify-center align-center"
   >
-    <template #badge>
+    <template #badge class="d-flex justify-center align-center">
       <input
         id="file"
         ref="file"
@@ -22,14 +22,9 @@
         role="button"
         @click="browseImage"
       >
-        <v-img
-          :src="require('@/assets/img/camera-icon.svg')"
-          alt="camera icon"
-          height="12px"
-          width="14px"
-          contain
-        />
+        <IconsCameraIris style="margin: 1px" :color="$vuetify.theme.themes.dark['darkGreen']"/>
       </v-avatar>
+
     </template>
     <v-avatar
       size="64"
