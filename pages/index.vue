@@ -1,3 +1,3 @@
 <template>
-  <Chat/>
+  <Chat chatId="public"/>
 </template>

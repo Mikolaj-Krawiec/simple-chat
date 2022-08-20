@@ -1,7 +1,7 @@
 <template>
   <div>
     <div
-      v-if="!user"
+      v-if="!authUser"
       class="d-flex flex-column justify-center"
     >
       <div class="d-flex justify-center">
@@ -48,8 +48,8 @@ export default {
     return {}
   },
   computed: {
-    user () {
-      return this.$store.state.user
+    authUser () {
+      return this.$store.state.authUser
     }
   }
 }

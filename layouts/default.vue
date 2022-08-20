@@ -14,6 +14,16 @@
             >
               <Nav/>
             </v-card>
+            <v-card
+              v-if="authUser"
+              class="mt-5 pa-2 rounded-xl d-flex flex-column-reverse justify-center"
+              color="darkGreen"
+              min-width="296"
+            >
+              <UtilsUsersList v-if="allUsers.length > 1"/>
+<!--              <v-divider/>-->
+              <UtilsChatsList/>
+            </v-card>
           </v-col>
           <v-col>
             <v-card
@@ -31,8 +41,12 @@
 
 <script>
 export default {
-  data () {
-    return {
+  computed: {
+    authUser () {
+      return this.$store.state.authUser
+    },
+    allUsers () {
+      return this.$store.state.allUsers
     }
   }
 }

@@ -59,7 +59,7 @@ export default {
       },
       firestore: {
         memoryOnly: false,
-        enablePersistence: true,
+        enablePersistence: false,
         emulatorPort: isDev && useEmulators ? 8080 : undefined,
         settings: {
           experimentalForceLongPolling: isDev && useEmulators,
