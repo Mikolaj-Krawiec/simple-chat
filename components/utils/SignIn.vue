@@ -49,7 +49,6 @@
         <v-col class="text-left pt-1">
           <label
             class="lightGray--text"
-            for="password_input"
           >
             Password
           </label>
@@ -57,7 +56,6 @@
       </v-row>
       <v-text-field
         light
-        id="password_input"
         v-model="password"
         name="password"
         :rules="passwordRules"
@@ -88,6 +86,7 @@
         dark
         class="sign_in_button mb-4 mt-1 blue-button-box-shadow"
         data-cy="sign_in_button"
+        :disabled="!valid"
         @click="signInWithEmail"
       >
         <span class="lightGray--text">Login</span>
@@ -126,6 +125,11 @@ export default {
     user () {
       return this.$store.state.user
     },
+  },
+  watch: {
+    authUser (authUser) {
+      if (authUser) this.$router.push('/')
+    }
   },
   methods: {
     async signInWithEmail () {

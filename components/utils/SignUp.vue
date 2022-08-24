@@ -20,7 +20,27 @@
         <v-col class="text-left pt-1">
           <label
             class="lightGray--text"
-            for="email_input"
+          >
+            What's your name?
+          </label>
+        </v-col>
+      </v-row>
+      <v-text-field
+        light
+        v-model="name"
+        name="name"
+        color="primary"
+        background-color="lightGray"
+        solo
+        flat
+        outlined
+        rounded
+        dense
+      />
+      <v-row justify="start">
+        <v-col class="text-left pt-1">
+          <label
+            class="lightGray--text"
           >
             What's your email?
           </label>
@@ -28,7 +48,6 @@
       </v-row>
       <v-text-field
         light
-        id="email_input"
         v-model="email"
         name="email"
         type="email"
@@ -45,7 +64,6 @@
         <v-col class="text-left pt-1">
           <label
             class="lightGray--text"
-            for="email_confirm_input"
           >
             Confirm your email
           </label>
@@ -53,7 +71,6 @@
       </v-row>
       <v-text-field
         light
-        id="email_confirm_input"
         v-model="emailConfirm"
         name="confirm-email"
         :rules="emailConfirmRules"
@@ -69,7 +86,6 @@
         <v-col class="text-left pt-1">
           <label
             class="lightGray--text"
-            for="password_input"
           >
             Create a password
           </label>
@@ -77,10 +93,31 @@
       </v-row>
       <v-text-field
         light
-        id="password_input"
         v-model="password"
         name="password"
         :rules="passwordRules"
+        type="password"
+        background-color="lightGray"
+        solo
+        flat
+        outlined
+        dense
+        rounded
+      />
+      <v-row justify="start">
+        <v-col class="text-left pt-1">
+          <label
+            class="lightGray--text"
+          >
+            Confirm your password
+          </label>
+        </v-col>
+      </v-row>
+      <v-text-field
+        light
+        v-model="passwordConfirm"
+        name="confirm-password"
+        :rules="passwordConfirmRules"
         type="password"
         background-color="lightGray"
         solo
@@ -97,6 +134,7 @@
         dark
         class="sign_up_button mb-4 blue-button-box-shadow"
         data-cy="sign_up_button"
+        :disabled="!valid"
         @click="signUpWithEmail()"
       >
         <span class="lightGray--text">Sign up</span>
@@ -116,15 +154,30 @@ export default {
     return {
       loading: false,
       valid: false,
+      name: '',
       email: '',
       emailConfirm: '',
       password: '',
+      passwordConfirm: '',
       emailRules: [
         v => !!v || 'Email is required',
         v => /.+@.+/.test(v) || 'Email must be valid'
       ],
+      emailConfirmRules: [
+        v => !!v || 'Email is required',
+        v => v === this.email || 'Your email address differs'
+      ],
       passwordRules: [
-        v => !!v || 'Password is required'
+        v => !!v || 'Password is required',
+        (v) => v.length >= 8 || "Password must be more than 8 characters",
+        (v) => /^(?=.*[a-z])/.test(v) || "Password must contain a lowercase letter.",
+        (v) => /^(?=.*[A-Z])/.test(v) || "Password must contain an uppercase letter.",
+        (v) => /^(?=.*\d)/.test(v) || "Password must contain a number",
+        v => /^(?=.*[^\d^\w])/.test(v) || "Password must contain a symbol."
+      ],
+      passwordConfirmRules: [
+        v => !!v || 'Password is required',
+        v => v === this.password || 'Your password differs',
       ],
       errorMessage: ''
     }
@@ -132,12 +185,11 @@ export default {
   computed: {
     authUser () {
       return this.$store.state.authUser
-    },
-    emailConfirmRules () {
-      return [
-        v => !!v || 'Email is required',
-        v => v === this.email || 'Your email address differs'
-      ]
+    }
+  },
+  watch: {
+    authUser (authUser) {
+      if (authUser) this.$router.push('/')
     }
   },
   methods: {
@@ -150,11 +202,17 @@ export default {
             this.password
           )
           const user = response.user
+          let emailSent = false
+          if (user != null) {
+            await user.sendEmailVerification()
+            emailSent = true
+          }
           const userRef = this.$fire.firestore.collection('users').doc(user.uid)
           await userRef.set({
-            name: user.displayName,
+            name: this.name || user.displayName,
             email: user.email,
-            avatar: user.photoURL
+            avatar: user.photoURL,
+            emailSent
           })
           await this.$store.dispatch('getUserInfo', user.uid)
           await this.$router.push('/')

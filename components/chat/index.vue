@@ -141,7 +141,7 @@ export default {
     chat () {
       const chat = this.$store.state.chats.find(item => item.id === this.chatId)
       if(chat) return chat
-      else return {id: this.chatId, name: 'loading...', users: [], messages: []}
+      else return {id: this.chatId, name: 'loading...', users: [], messages: [], usersLastSeenMessages: []}
     },
     allUsers () {
       return this.$store.state.allUsers
@@ -182,59 +182,7 @@ export default {
   },
   async mounted() {
     console.log('MOUNTED FOR:', this.chatId)
-    // console.log('Init:', this.init)
-    // const chatRef =  this.$fire.firestore.collection('chats').doc(this.chatId)
-    // let chatDoc = await chatRef.get()
-    // chatDoc = await chatRef.get()
-    // if(chatDoc.exists) {
-    //   const chatMessagesRef = chatRef.collection('messages')
-    //   this.unsubscribeChat = chatMessagesRef.orderBy('timestamp', 'desc').limit(5)
-    //     .onSnapshot((snapshot) => {
-    //     if (!snapshot.empty) {
-    //       console.log('last message id:', snapshot.docs[0].id)
-    //       snapshot.docChanges().forEach(async (change) => {
-    //         if (change.type === "added") {
-    //           const msgData = change.doc.data()
-    //           if(!this.authUser) {
-    //             await this.addChatMember(msgData.uid)
-    //           }
-    //           console.log('new message:', msgData.message)
-    //           msgData.id = change.doc.id
-    //           msgData.watched = true
-    //           if(this.messages.length && msgData.timestamp < this.messages[0].timestamp) {
-    //             await this.messages.unshift(msgData)
-    //           }
-    //           else if(this.messages.length > 1) {
-    //             const container = this.$refs.container
-    //             if(container) {
-    //               const scrollBottom = container.scrollHeight - container.clientHeight - container.scrollTop
-    //               if(scrollBottom < 40 || this.isOwnMessage(msgData)) {
-    //                 this.scrollTo()
-    //               }
-    //             }
-    //             await this.messages.push(msgData)
-    //           } else await this.messages.push(msgData)
-    //           if(this.init && msgData.id === snapshot.docs[0].id) {
-    //             this.init = false
-    //             this.scrollTo()
-    //           }
-    //         }
-    //         if (change.type === "modified") {
-    //           console.log("Modified message: ", change.doc.data());
-    //           const newMessage = change.doc.data()
-    //           const oldMessage = this.messages.find((item) => item.id === change.doc.id)
-    //           oldMessage.message = newMessage.message
-    //           oldMessage.edited = true
-    //           if (newMessage.deleted) oldMessage.deleted = true
-    //         }
-    //         if (change.type === "removed") {
-    //           console.log("Removed message: ", change.doc.data());
-    //           // this.messages = this.messages.filter((item) => item.id !== change.doc.id)
-    //         }
-    //       });
-    //     }
-    //   })
-    // }
+    await this.scrollTo()
   },
   methods: {
     onKeyPress(e) {
@@ -295,54 +243,47 @@ export default {
       const scrollBottom = container.scrollHeight - container.clientHeight - container.scrollTop
       this.scrollBtn = scrollBottom > 200
     },
-    async loadOldMessages () {
+    loadOldMessages () {
       this.$store.dispatch('loadOldMessages', this.chatId)
-    //   if (this.messages.length) {
-    //     const limit = 5
-    //     this.loadingMessages = true
-    //     const firstMessage = this.messages[0]
-    //     const chatMessagesRef = this.$fire.firestore.collection('chats').doc(this.chatId)
-    //         .collection('messages').where('timestamp', '<', firstMessage.timestamp)
-    //     const olderMessagesRaw = await chatMessagesRef.orderBy('timestamp', 'desc').limit(limit).get()
-    //     if(olderMessagesRaw.docs.length < limit) {
-    //       this.allOldMessagesLoaded = true
-    //     }
-    //     const olderMessages = []
-    //     for (const snapshot of olderMessagesRaw.docs) {
-    //       const doc = snapshot.data()
-    //       doc.id = snapshot.id
-    //       doc.watched = false
-    //       await this.addChatMember(doc.uid)
-    //       olderMessages.unshift(doc)
-    //     }
-    //     await this.messages.unshift(...olderMessages)
-    //
-    //     this.scrollTo(true)
-    //     this.loadingMessages = false
-    //   } else {
-    //     this.allOldMessagesLoaded = true
-    //   }
     },
-    scrollTo(id=null) {
+    async scrollTo (id=null) {
       console.log('scrollTo')
-      if (this.messages.length > 2) {
+      if(this.messages.length > 0) {
         const duration = id ? 0 : 600
-        const container = this.$refs.container
-        if (container) {
-          const options = {
-            duration: duration,
-            offset: 60,
-            easing: 'easeInOutCubic',
-            container
-          }
-          id = id || this.messages[this.messages.length - 1].id
-          const target = `m-${id}`
-          const message =  document.getElementById(target)
-          if (message) {
-            this.$vuetify.goTo('#' + target, options)
-            console.log('successfully go to:', '#' + target)
-          } else console.log('message with id:', target, 'NOT found')
-        } else console.log('container NOT found')
+        const message = id ? this.messages.find(item => item.id === id) : this.messages[this.messages.length - 1]
+        id = id || message.id
+        if (this.messages.length > 2) {
+          const container = this.$refs.container
+          if (container) {
+            const options = {
+              duration: duration,
+              offset: 60,
+              easing: 'easeInOutCubic',
+              container
+            }
+            const target = `m-${id}`
+            const messageEl =  document.getElementById(target)
+            if (messageEl) {
+              await this.$vuetify.goTo('#' + target, options)
+              console.log('successfully go to:', '#' + target)
+              await this.markMessageAsSeen(message)
+            } else console.log('message with id:', target, 'NOT found')
+          } else console.log('container NOT found')
+        } else {
+          await this.markMessageAsSeen(message)
+        }
+      }
+    },
+    async markMessageAsSeen (message) {
+      // New message are not supported on public chat
+      if (this.chatId !== 'public') {
+        const chatRef = this.$fire.firestore.collection('chats').doc(this.chatId)
+        const usersLastSeenMessages = {...this.chat.usersLastSeenMessages}
+        usersLastSeenMessages[this.user.id] = {messageId: message.id, timestamp: message.timestamp}
+        await chatRef.set({usersLastSeenMessages: usersLastSeenMessages}, {merge: true})
+        const messageIndex = this.messages.findIndex(item => item.id === message.id)
+        const unseenMessages = this.messages.length - 1 - messageIndex
+        this.$store.commit('UPDATE_CHAT', {...this.chat, newMessages: unseenMessages})
       }
     },
     async sendMessage () {

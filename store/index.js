@@ -30,7 +30,8 @@ export const mutations = {
     console.log('SET_AUTH_USER: ', authUser)
     state.authUser = {
       uid: authUser.uid,
-      email: authUser.email
+      email: authUser.email,
+      emailVerified: authUser.emailVerified
     }
   },
   SET_USER (state, { user }) {
@@ -147,7 +148,6 @@ export const actions = {
     ctx.dispatch('getChatMessages', 'public')
   },
 
-
   async getUserChats (ctx, userId) {
     const ownUserRef = this.$fire.firestore.collection('users').doc(userId)
     const chatsRef = this.$fire.firestore.collection('chats')
@@ -161,6 +161,7 @@ export const actions = {
               id: change.doc.id,
               name: data.name.filter(item => item !== ctx.state.user.name && item !== ctx.state.user.email).join(', '),
               users: data.users.map(item => item.id),
+              usersLastSeenMessages: data.usersLastSeenMessages,
               newMessages: 0,
               messages: [],
               allOldMessagesLoaded: false,
@@ -168,6 +169,8 @@ export const actions = {
             }
             ctx.commit('UPDATE_CHAT', chat)
             ctx.dispatch('getChatMessages', change.doc.id)
+          } else if (change.type === "modified") {
+            console.log('chat has been modified')
           }
         })
       }
@@ -191,27 +194,13 @@ export const actions = {
             console.log('new message:', msgData)
             let newMessages = chat.newMessages
             // New message badge information
-            if (!ctx.state.authUser || msgData.uid !== ctx.state.authUser.uid) newMessages += 1
-            if(ctx.state.authUser) {
-              // TODO
-              // await this.addChatMember(msgData.uid)
-            }
-            // TODO
-            // msgData.watched = true
+            if (chatId !== 'public' && (!ctx.state.authUser || msgData.uid !== ctx.state.authUser.uid)) newMessages += 1
             if (chat.messages.length && msgData.timestamp < chat.messages[0].timestamp) {
               const messages = chat.messages.slice()
               messages.unshift(msgData)
               ctx.commit('UPDATE_CHAT', {...chat, messages, newMessages})
             }
             else if (chat.messages.length > 1) {
-              // TODO move to component
-              // const container = this.$refs.container
-              // if(container) {
-              //   const scrollBottom = container.scrollHeight - container.clientHeight - container.scrollTop
-              //   if(scrollBottom < 40 || this.isOwnMessage(msgData)) {
-              //     this.scrollTo()
-              //   }
-              // }
               const messages = chat.messages.slice()
               messages.push(msgData)
               ctx.commit('UPDATE_CHAT', {...chat, messages, newMessages})
@@ -220,13 +209,7 @@ export const actions = {
               messages.push(msgData)
               ctx.commit('UPDATE_CHAT', {...chat, messages, newMessages})
             }
-            if(this.init && msgData.id === snapshot.docs[0].id) {
-              this.init = false
-              // TODO
-              // this.scrollTo()
-            }
-          }
-          if (change.type === "modified") {
+          } else if (change.type === "modified") {
             console.log("Modified message: ", change.doc.data());
             const newMessage = change.doc.data()
             newMessage.id = change.doc.id
@@ -238,7 +221,6 @@ export const actions = {
           }
           if (change.type === "removed") {
             console.log("Removed message: ", change.doc.data());
-            // this.messages = this.messages.filter((item) => item.id !== change.doc.id)
           }
         })
       }
@@ -253,7 +235,6 @@ export const actions = {
       let allOldMessagesLoaded = false
       const limit = 5
       ctx.commit('UPDATE_CHAT', {...chat, loadingMessages: true})
-      // this.loadingMessages = true
       const firstMessage = chat.messages[0]
       const chatMessagesRef = this.$fire.firestore.collection('chats').doc(chatId)
           .collection('messages').where('timestamp', '<', firstMessage.timestamp)
@@ -270,13 +251,9 @@ export const actions = {
       }
       const messages = chat.messages.slice()
       messages.unshift(...olderMessages)
-
-      // this.scrollTo(true)
       ctx.commit('UPDATE_CHAT', {...chat, messages, loadingMessages: false, allOldMessagesLoaded})
-      // this.loadingMessages = false
     } else {
       ctx.commit('UPDATE_CHAT', {...chat, allOldMessagesLoaded: true})
-      // this.allOldMessagesLoaded = true
     }
   }
 }

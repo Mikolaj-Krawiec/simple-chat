@@ -21,7 +21,6 @@
               min-width="296"
             >
               <UtilsUsersList v-if="allUsers.length > 1"/>
-<!--              <v-divider/>-->
               <UtilsChatsList/>
             </v-card>
           </v-col>

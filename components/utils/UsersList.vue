@@ -72,9 +72,11 @@ export default {
           const userDoc = await userRef.get()
           const userData = userDoc.data()
           const ownUserRef = this.$fire.firestore.collection('users').doc(this.authUser.uid)
+          const template = {messageId: null, timestamp: null}
           const chat = await this.$fire.firestore.collection('chats').add({
             name: [userData.name || userData.email, this.user.name || this.user.email],
-            users: [userRef, ownUserRef]
+            users: [userRef, ownUserRef],
+            usersLastSeenMessages: {[userRef.id]: template, [ownUserRef.id]: template}
           })
           console.log('go to chat:', chat.id)
           await this.$router.push({path: '/' + chat.id})
