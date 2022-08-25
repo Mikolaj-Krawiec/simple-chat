@@ -2,7 +2,7 @@ import colors from 'vuetify/es5/util/colors'
 import { firebaseConfig } from './settings'
 
 const isDev = process.env.NODE_ENV === 'development'
-const useEmulators = true // manually change if emulators needed
+const useEmulators = false // manually change if emulators needed
 
 export default {
   // Disable server-side rendering: https://go.nuxtjs.dev/ssr-mode
