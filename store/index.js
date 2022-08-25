@@ -194,7 +194,14 @@ export const actions = {
             console.log('new message:', msgData)
             let newMessages = chat.newMessages
             // New message badge information
-            if (chatId !== 'public' && (!ctx.state.authUser || msgData.uid !== ctx.state.authUser.uid)) newMessages += 1
+            if (chatId !== 'public') {
+              const lastSeenMessage = chat.usersLastSeenMessages[ctx.state.user.id]
+              if (msgData.id !== lastSeenMessage.id &&
+              msgData.timestamp > lastSeenMessage.timestamp &&
+              (!ctx.state.authUser || msgData.uid !== ctx.state.authUser.uid)) {
+                newMessages += 1
+              }
+            }
             if (chat.messages.length && msgData.timestamp < chat.messages[0].timestamp) {
               const messages = chat.messages.slice()
               messages.unshift(msgData)

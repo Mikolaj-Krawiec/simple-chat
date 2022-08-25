@@ -277,13 +277,19 @@ export default {
     async markMessageAsSeen (message) {
       // New message are not supported on public chat
       if (this.chatId !== 'public') {
-        const chatRef = this.$fire.firestore.collection('chats').doc(this.chatId)
-        const usersLastSeenMessages = {...this.chat.usersLastSeenMessages}
-        usersLastSeenMessages[this.user.id] = {messageId: message.id, timestamp: message.timestamp}
-        await chatRef.set({usersLastSeenMessages: usersLastSeenMessages}, {merge: true})
-        const messageIndex = this.messages.findIndex(item => item.id === message.id)
-        const unseenMessages = this.messages.length - 1 - messageIndex
-        this.$store.commit('UPDATE_CHAT', {...this.chat, newMessages: unseenMessages})
+        const lastSeenMessage = this.chat.usersLastSeenMessages[this.user.id]
+        if (message.id !== lastSeenMessage.id && message.timestamp > lastSeenMessage.timestamp) {
+          console.log('markMessageAsSeen:', message)
+          const chatRef = this.$fire.firestore.collection('chats').doc(this.chatId)
+          const usersLastSeenMessages = {...this.chat.usersLastSeenMessages}
+          usersLastSeenMessages[this.user.id] = {messageId: message.id, timestamp: message.timestamp}
+          await chatRef.set({usersLastSeenMessages: usersLastSeenMessages}, {merge: true})
+          const messageIndex = this.messages.findIndex(item => item.id === message.id)
+          const unseenMessages = this.messages.length - 1 - messageIndex
+          this.$store.commit('UPDATE_CHAT', {...this.chat, newMessages: unseenMessages})
+        } else {
+          console.log('message is already seen')
+        }
       }
     },
     async sendMessage () {
