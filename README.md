@@ -1,5 +1,6 @@
 # simple-chat
 
+### Application is accessible under [http://simple-chat-c503c.web.app](http://simple-chat-c503c.web.app)
 ## Development Setup
 
 ```bash
