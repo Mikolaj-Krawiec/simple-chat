@@ -146,7 +146,8 @@ export const actions = {
       users: [],
       newMessages: 0,
       messages: [],
-      avatars: [null]
+      avatars: [null],
+      allOldMessagesLoaded: true
     }
     ctx.commit('UPDATE_CHAT', chat)
     ctx.dispatch('getChatMessages', 'public')
@@ -193,7 +194,7 @@ export const actions = {
               usersLastSeenMessages: data.usersLastSeenMessages,
               newMessages: 0,
               messages: [],
-              allOldMessagesLoaded: false,
+              allOldMessagesLoaded: true,
               loadingMessages: false
             }
             ctx.commit('UPDATE_CHAT', chat)
@@ -216,11 +217,11 @@ export const actions = {
     const unsubscribeChatMessages = messagesRef.orderBy('timestamp', 'desc').limit(MESSAGE_LIMIT)
       .onSnapshot((snapshot) => {
       if(!snapshot.empty) {
-        if (init && snapshot.docChanges().length < MESSAGE_LIMIT) {
+        if (init && snapshot.docChanges().length >= MESSAGE_LIMIT) {
           console.log('messages loaded:', snapshot.docChanges().length)
           init = false
           const chat = ctx.state.chats.find(item => item.id === chatId)
-          ctx.commit('UPDATE_CHAT', {...chat, allOldMessagesLoaded: true})
+          ctx.commit('UPDATE_CHAT', {...chat, allOldMessagesLoaded: false})
         }
         snapshot.docChanges().forEach(async (change) => {
           const chat = ctx.state.chats.find(item => item.id === chatId)

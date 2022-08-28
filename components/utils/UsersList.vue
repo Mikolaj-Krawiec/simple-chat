@@ -60,7 +60,6 @@ export default {
       )
     },
     minHeight () {
-      console.log('filteredUsers:', this.filteredUsers, this.filteredUsers.length)
       return this.filteredUsers.length > 0 ? `min-height: ${this.filteredUsers.length * 28 + 24}px` : ''
     }
   },
