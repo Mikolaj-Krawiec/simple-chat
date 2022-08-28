@@ -25,6 +25,6 @@ $ npm run build
 $ npm run generate
 
 #deploy to firebase
-$ firebase deploy --project={project_id}
+$ firebase deploy --project=default
 ```
 

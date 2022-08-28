@@ -1,12 +1,11 @@
 <template>
-  <v-row class="d-flex flex-column ma-0">
+  <v-row class="d-flex flex-column ma-0" :style="minHeight">
     <v-col class="d-flex flex-column-reverse" :class="{'pa-0': filteredUsers.length === 0}">
       <div v-for="user in filteredUsers" :key="user.id">
         <v-hover v-slot="{ hover }">
           <v-btn
             text
             block
-            v-if="user.id !== authUser.uid"
             :class="{'hover': hover}"
             class="pa-0 d-flex align-center justify-start user"
             @click="startNewChat(user.id)"
@@ -54,7 +53,15 @@ export default {
       return this.$store.state.allUsers
     },
     filteredUsers () {
-      return this.allUsers.filter(user => !this.chats.some(item => item.users.length === 2 && item.users.includes(user.id)))
+      return this.allUsers.filter(
+        user => user.id !== this.user.id && !this.chats.some(
+          item => item.users.length === 2 && item.users.includes(user.id)
+        )
+      )
+    },
+    minHeight () {
+      console.log('filteredUsers:', this.filteredUsers, this.filteredUsers.length)
+      return this.filteredUsers.length > 0 ? `min-height: ${this.filteredUsers.length * 28 + 24}px` : ''
     }
   },
   methods: {

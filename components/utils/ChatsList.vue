@@ -1,5 +1,5 @@
 <template>
-  <v-row class="d-flex flex-column ma-0">
+  <v-row class="d-flex flex-column ma-0" :style="`min-height: ${chats.length * 28 + 24}px`">
     <v-col class="d-flex flex-column-reverse">
       <div v-for="chat in chats" :key="chat.id">
         <v-hover v-slot="{ hover }">
@@ -10,8 +10,8 @@
             class="pa-0 d-flex align-center justify-start user"
             @click="goToChat(chat)"
           >
-<!--              color="light-green accent-4"-->
             <v-badge
+              color="light-green accent-4"
               bordered
               overlap
               bottom
@@ -21,7 +21,12 @@
               :value="chat.newMessages"
               :content="chat.newMessages"
             >
+              <div  v-if="chat.avatars.length > 1">
+                <UtilsGroupAvatar :avatars="chat.avatars"/>
+              </div>
               <UtilsUserAvatar
+                v-else
+                :avatar="chat.avatars[0]"
                 :alt="`Avatar-${chat.name}`"
               />
             </v-badge>
@@ -36,11 +41,19 @@
 </template>
 
 <script>
+import UtilsGroupAvatar from "./GroupAvatar";
 export default {
   name: 'UtilsChatsList',
+  components: {UtilsGroupAvatar},
   computed: {
     chats () {
       return this.$store.state.chats
+    },
+    user () {
+      return this.$store.state.user
+    },
+    allUsers () {
+      return this.$store.state.allUsers
     }
   },
   methods: {

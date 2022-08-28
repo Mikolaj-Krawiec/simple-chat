@@ -1,3 +1,5 @@
+import { MESSAGE_LIMIT } from '../settings'
+
 let unsubscribeUser = () => {}
 let unsubscribeChats = () => {}
 let unsubscribeAllUsers = () => {}
@@ -68,7 +70,7 @@ export const mutations = {
 }
 
 export const actions = {
-  onAuthStateChangedAction (ctx, { authUser }) {
+  async onAuthStateChangedAction (ctx, { authUser }) {
     unsubscribeUser()
     unsubscribeChats()
     for (const chat of chatMessages) {
@@ -80,13 +82,14 @@ export const actions = {
       // userRef.set({online: true}, {merge: true})
       ctx.commit('SET_AUTH_USER', { authUser })
       ctx.dispatch('getUserInfo', authUser.uid)
-      ctx.dispatch('getAllUsers')
+      await ctx.dispatch('getAllUsers')
       ctx.dispatch('getUserChats', authUser.uid)
     } else {
       // uid = null
       // const userRef = this.$fire.firestore.collection('users').doc(authUser.uid)
       // userRef.set({online: true}, {merge: false})
       ctx.commit('RESET_STORE')
+      ctx.dispatch('getAllUsers')
     }
     ctx.dispatch('getPublicChat')
   },
@@ -142,7 +145,8 @@ export const actions = {
       name: chatData.name,
       users: [],
       newMessages: 0,
-      messages: []
+      messages: [],
+      avatars: [null]
     }
     ctx.commit('UPDATE_CHAT', chat)
     ctx.dispatch('getChatMessages', 'public')
@@ -157,10 +161,35 @@ export const actions = {
         snapshot.docChanges().forEach(async (change) => {
           if (change.type === "added") {
             const data = change.doc.data()
+
+            const users = data.users.map(item => item.id)
+            const name = []
+            if (change.doc.id === 'public') name.push('Public Chat')
+            else {
+              for (const userId of users) {
+                if (userId !== ctx.state.user.id) {
+                  const user = ctx.state.allUsers.find(user => user.id === userId)
+                  if (user) name.push(user.name || user.email)
+                }
+              }
+            }
+
+            const avatars = []
+            if (change.doc.id === 'public') avatars.push(null)
+            else {
+              for (const userId of users) {
+                if (userId !== ctx.state.user.id) {
+                  const user = ctx.state.allUsers.find(user => user.id === userId)
+                  if (user) avatars.push(user.avatar || user.googleAvatar)
+                }
+              }
+            }
+
             const chat = {
               id: change.doc.id,
-              name: data.name.filter(item => item !== ctx.state.user.name && item !== ctx.state.user.email).join(', '),
-              users: data.users.map(item => item.id),
+              name: name.join(', '),
+              users,
+              avatars,
               usersLastSeenMessages: data.usersLastSeenMessages,
               newMessages: 0,
               messages: [],
@@ -180,11 +209,19 @@ export const actions = {
   },
 
   async getChatMessages (ctx, chatId) {
+    let init = true
+
     const messagesRef = this.$fire.firestore.collection('chats').doc(chatId)
       .collection('messages')
-    const unsubscribeChatMessages = messagesRef.orderBy('timestamp', 'desc').limit(5)
+    const unsubscribeChatMessages = messagesRef.orderBy('timestamp', 'desc').limit(MESSAGE_LIMIT)
       .onSnapshot((snapshot) => {
       if(!snapshot.empty) {
+        if (init && snapshot.docChanges().length < MESSAGE_LIMIT) {
+          console.log('messages loaded:', snapshot.docChanges().length)
+          init = false
+          const chat = ctx.state.chats.find(item => item.id === chatId)
+          ctx.commit('UPDATE_CHAT', {...chat, allOldMessagesLoaded: true})
+        }
         snapshot.docChanges().forEach(async (change) => {
           const chat = ctx.state.chats.find(item => item.id === chatId)
 
@@ -240,13 +277,12 @@ export const actions = {
     const chat = ctx.state.chats.find(item => item.id === chatId)
     if (chat && chat.messages.length) {
       let allOldMessagesLoaded = false
-      const limit = 5
       ctx.commit('UPDATE_CHAT', {...chat, loadingMessages: true})
       const firstMessage = chat.messages[0]
       const chatMessagesRef = this.$fire.firestore.collection('chats').doc(chatId)
           .collection('messages').where('timestamp', '<', firstMessage.timestamp)
-      const olderMessagesRaw = await chatMessagesRef.orderBy('timestamp', 'desc').limit(limit).get()
-      if(olderMessagesRaw.docs.length < limit) {
+      const olderMessagesRaw = await chatMessagesRef.orderBy('timestamp', 'desc').limit(MESSAGE_LIMIT).get()
+      if(olderMessagesRaw.docs.length < MESSAGE_LIMIT) {
         allOldMessagesLoaded = true
       }
       const olderMessages = []

@@ -190,24 +190,17 @@ export default {
     },
     chatMemberName (uid) {
       if (uid === this.user.id) return 'You'
-      if (uid === 'Anonymous') return 'Anonymous'
-      if (this.authUser) {
+      else if (uid === 'Anonymous') return 'Anonymous'
+      else {
         const user = this.allUsers.find(item => item.id === uid)
         return user && user.name
-      } else {
-        const chatMember = this.chatMembers.find(item => item.uid === uid)
-        return chatMember && chatMember.name
       }
     },
     chatMemberAvatar (uid) {
       if (uid === 'Anonymous') return undefined
-      if (this.authUser) {
+      else {
         const user = this.allUsers.find(item => item.id === uid)
-        if (user) return user.avatar
-        else return undefined
-      } else {
-        const chatMember = this.chatMembers.find(item => item.uid === uid)
-        if (chatMember) return chatMember.avatar
+        if (user) return user.avatar || user.googleAvatar
         else return undefined
       }
     },
